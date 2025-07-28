@@ -76,7 +76,7 @@ ani = FuncAnimation(fig, update, frames=200, blit=True)
 
 # --- Save to temporary video file ---
 with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmpfile:
-    ani.save(tmpfile.name, fps=20, extra_args=['-vcodec', 'libx264'])
+    ani.save(tmpfile.name, fps=20)
     video_path = tmpfile.name
 
 # --- Display in Streamlit ---
