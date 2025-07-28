@@ -1,12 +1,11 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-import tempfile
-import os
+import matplotlib.animation as animation
+import streamlit.components.v1 as components
 
 # --- Physics Constants ---
-L = 1.0
+L = 1.0  # Box length
 hbar = 1.0
 m = 1.0
 
@@ -28,7 +27,7 @@ def normalize(coeffs):
     return coeffs / norm if norm != 0 else coeffs
 
 # --- Streamlit UI ---
-st.title("Particle in a 1D Box: Wavefunction Animation")
+st.title("🔊 Particle in a 1D Box: Live Animation")
 mode = st.radio("Select Mode", ["Single Energy Level", "Superposition"])
 
 if mode == "Single Energy Level":
@@ -47,40 +46,35 @@ else:
 # --- Animation Setup ---
 x = np.linspace(0, L, 500)
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
-line1, = ax1.plot([], [], label='Re(ψ)', color='blue')
-line2, = ax1.plot([], [], label='Im(ψ)', color='red')
-line3, = ax2.plot([], [], label='|ψ|²', color='green')
 
+line_re, = ax1.plot([], [], 'b-', label='Re(ψ)')
+line_im, = ax1.plot([], [], 'r-', label='Im(ψ)')
 ax1.set_xlim(0, L)
 ax1.set_ylim(-2, 2)
+ax1.set_ylabel('ψ(x, t)')
 ax1.legend()
-ax1.set_ylabel("ψ(x, t)")
 ax1.grid()
 
+line_prob, = ax2.plot([], [], 'g-', label='|ψ|²')
 ax2.set_xlim(0, L)
 ax2.set_ylim(0, 4)
+ax2.set_xlabel('x')
+ax2.set_ylabel('|ψ(x, t)|²')
 ax2.legend()
-ax2.set_xlabel("x")
-ax2.set_ylabel("|ψ(x, t)|²")
 ax2.grid()
 
+# --- Animation update function ---
 def update(frame):
     t = frame * 0.05
     psi_t = psi_superposition(coeffs, x, t)
-    line1.set_data(x, np.real(psi_t))
-    line2.set_data(x, np.imag(psi_t))
-    line3.set_data(x, np.abs(psi_t)**2)
-    return line1, line2, line3
+    line_re.set_data(x, np.real(psi_t))
+    line_im.set_data(x, np.imag(psi_t))
+    line_prob.set_data(x, np.abs(psi_t)**2)
+    return line_re, line_im, line_prob
 
-ani = FuncAnimation(fig, update, frames=200, blit=True)
+ani = animation.FuncAnimation(fig, update, frames=200, interval=50, blit=True)
 
-# --- Save to temporary video file ---
-with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmpfile:
-    ani.save(tmpfile.name, fps=20)
-    video_path = tmpfile.name
-
-# --- Display in Streamlit ---
-st.video(video_path)
-
-# Optional cleanup
-# os.unlink(video_path)  # uncomment to auto-delete after display
+# --- Embed animation in Streamlit using HTML ---
+st.write("### Animation (JS-based, interactive)")
+components.html(ani.to_jshtml(), height=800)
+    
